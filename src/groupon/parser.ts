@@ -5,35 +5,40 @@ export function parseDeals(rawCards: RawCard[], division: string): Deal[] {
 }
 
 function parseCard(card: RawCard, division: string): Deal {
+  const priceEuros = card.prices.price.amount / 100;
+  const originalPriceEuros = card.prices.strikeThroughPrice
+    ? card.prices.strikeThroughPrice.amount / 100
+    : priceEuros;
+
+  const closest = card.locationsSummary?.closest ?? null;
+
   return {
-    id: card.id ?? card.uuid,
+    id: card.id,
+    uuid: card.uuid,
     title: card.title,
-    description: card.shortDescription,
     merchant: card.merchant.name,
     division,
     category: card.categoryGuid,
-    originalPrice: card.value.amount,
-    discountedPrice: card.price.amount,
-    discountPercent: card.discountPercent,
-    currency: card.price.currency,
+    priceEuros,
+    originalPriceEuros,
+    discountPercent: card.discountPercentage,
+    currency: card.prices.price.currencyCode,
     url: card.url,
-    imageUrl: card.imageUrl,
-    soldCount: card.soldCount,
-    remainingCount: card.remainingCount,
-    expiresAt: card.expiresAt,
-    badges: card.badges.map((b) => ({ label: b.label, type: b.badgeType })),
-    promotions: card.promotions.map((p) => ({
-      code: p.code,
-      discount: p.discountPercentage,
-      description: p.description,
-    })),
-    flashSale: card.flashSale
+    imageUrl: card.imageUrls.medium,
+    ratingValue: card.rating?.value,
+    ratingCount: card.rating?.count,
+    locationAddress: closest?.address,
+    locationName: closest?.name,
+    locationLat: closest?.lat,
+    locationLng: closest?.lng,
+    badges: card.badges.map((b) => ({ type: b.badgeType, displayText: b.displayText })),
+    promotion: card.promotion
       ? {
-          startsAt: card.flashSale.startDateTime,
-          endsAt: card.flashSale.endDateTime,
-          discountPercent: card.flashSale.discountPercent,
+          code: card.promotion.promoCode,
+          expiresAt: card.promotion.expiration,
+          priceEuros: card.promotion.price.amount / 100,
         }
       : undefined,
-    isFeatured: card.isFeatured ?? false,
+    isFeatured: card.flags.isTopRatedDeal,
   };
 }

@@ -20,12 +20,12 @@ export async function handleBestValue(args: BestValueArgs): Promise<string> {
 
     let filtered = deals;
     if (args.max_price !== undefined) {
-      filtered = deals.filter((d) => d.discountedPrice <= args.max_price!);
+      filtered = deals.filter((d) => d.priceEuros <= args.max_price!);
     }
 
     filtered.sort((a, b) => {
       if (b.discountPercent !== a.discountPercent) return b.discountPercent - a.discountPercent;
-      return a.discountedPrice - b.discountedPrice;
+      return a.priceEuros - b.priceEuros;
     });
 
     const results = filtered.slice(0, args.limit);
@@ -40,7 +40,7 @@ export async function handleBestValue(args: BestValueArgs): Promise<string> {
       lines.push(`${i + 1}. ${deal.title}`);
       lines.push(`   Merchant: ${deal.merchant}`);
       lines.push(`   Discount: ${deal.discountPercent}%`);
-      lines.push(`   Price: €${formatPrice(deal.discountedPrice)} (was €${formatPrice(deal.originalPrice)})`);
+      lines.push(`   Price: €${formatPrice(deal.priceEuros)} (was €${formatPrice(deal.originalPriceEuros)})`);
       if (deal.category) lines.push(`   Category: ${deal.category}`);
       lines.push(`   URL: ${deal.url}`);
       lines.push("");

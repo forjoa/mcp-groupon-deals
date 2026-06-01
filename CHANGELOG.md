@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-01
+
+### Added
+
+- `src/groupon/cookieManager.ts` — automatic Cloudflare cookie harvesting via headless Chromium (Playwright): on first call the module launches a browser, navigates to groupon.es, and extracts the required session cookies (`__cf_bm` and related) so the MCP server works without any manual configuration.
+- 20-minute in-memory cookie cache — Chromium is launched once and all subsequent tool calls within the TTL reuse the cached session, making them instant.
+
+### Changed
+
+- `src/groupon/client.ts`: `buildHeaders` is now async and populates `Cookie` and related headers dynamically via `getCookieHeader()` instead of using hardcoded values.
+- `package.json`: added `playwright` as a runtime dependency and a `postinstall` script that runs `playwright install chromium` automatically on `npm install` (~300 MB one-time download).
+
+## [0.2.2] - 2026-06-01
+
+### Fixed
+
+- API client now uses the correct Apollo Persisted Query format discovered via reverse engineering of the real groupon.es endpoint: request body is an array, the persisted query hash is `c2f9fe8c...`, variables are wrapped under `dealFeedParams`, and the response is read from `queryDealFeed`.
+- `parser.ts`: prices are now correctly converted from cents to euros (`amount / 100`) using the real nested path `prices.price.amount`; all other field mappings (`discountPercentage`, `rating.value`, `rating.count`, `badges[].displayText`, `locationsSummary`) match the actual API response shapes.
+- `types.ts`: raw API interfaces replaced with shapes that reflect the real API payload (`RawPrices`, `RawRating`, `RawBadge`, `RawLocationsSummary`, `RawPromotion`), eliminating silent field mismatches.
+- `cache.ts`: `selectTtl` updated to use the `promotion` field to detect time-sensitive deals instead of the removed `flashSale` field.
+
+### Changed
+
+- `Deal` interface field renames for clarity: `discountedPrice` is now `priceEuros`; `originalPrice` is now `originalPriceEuros`.
+- `Deal` interface: added `ratingValue`, `ratingCount`, `locationAddress`, `locationName`, `locationLat`, `locationLng` fields sourced from real API data; removed `flashSale`; added `promotion` object.
+- All six tool handlers and test fixtures updated to reflect the new field names.
+
 ## [0.2.1] - 2026-06-01
 
 ### Added
@@ -77,7 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/cache.ts` — TTL cache stub for reducing redundant API calls.
 - Zero TypeScript errors confirmed (`tsc --noEmit`).
 
-[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.0...v0.1.1

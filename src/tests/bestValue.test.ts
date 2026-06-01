@@ -63,14 +63,14 @@ describe("handleBestValue", () => {
       ...spaBDeal,
       id: "tiebreaker-cheap",
       discountPercent: 40,
-      discountedPrice: 10.0,
+      priceEuros: 10.0,
       title: "Oferta barata igual descuento",
     };
     const pricierDeal: Deal = {
       ...spaBDeal,
       id: "tiebreaker-pricey",
       discountPercent: 40,
-      discountedPrice: 30.0,
+      priceEuros: 30.0,
       title: "Oferta cara igual descuento",
     };
 

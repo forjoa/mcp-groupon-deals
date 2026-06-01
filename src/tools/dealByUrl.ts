@@ -60,11 +60,11 @@ export async function handleDealByUrl(args: DealByUrlArgs): Promise<string> {
         `Deal found in ${division}:\n`,
         `Title:    ${deal.title}`,
         `Merchant: ${deal.merchant}`,
-        `Price:    €${formatPrice(deal.discountedPrice)} (was €${formatPrice(deal.originalPrice)}, ${deal.discountPercent}% off)`,
+        `Price:    €${formatPrice(deal.priceEuros)} (was €${formatPrice(deal.originalPriceEuros)}, ${deal.discountPercent}% off)`,
         `Category: ${deal.category ?? "N/A"}`,
-        `Expires:  ${deal.expiresAt ? formatDate(deal.expiresAt) : "No expiry date"}`,
-        `Flash:    ${deal.flashSale ? `Active until ${formatDate(deal.flashSale.endsAt)}` : "No active flash sale"}`,
-        `Badges:   ${deal.badges.length > 0 ? deal.badges.map((b) => b.label).join(", ") : "None"}`,
+        `Rating:   ${deal.ratingValue !== undefined ? `${deal.ratingValue} (${deal.ratingCount} reviews)` : "N/A"}`,
+        `Promo:    ${deal.promotion ? `${deal.promotion.code} — expires ${formatDate(deal.promotion.expiresAt)}` : "No active promotion"}`,
+        `Badges:   ${deal.badges.length > 0 ? deal.badges.map((b) => b.displayText).join(", ") : "None"}`,
         `URL:      ${deal.url}`,
       ];
 

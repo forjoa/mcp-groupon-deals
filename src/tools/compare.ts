@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { fetchDeals, GrouponApiError } from "../groupon/client.js";
-import { DivisionSchema, formatPrice, formatDate } from "./shared.js";
+import { DivisionSchema, formatPrice } from "./shared.js";
 
 export const CompareSchema = z.object({
   division: DivisionSchema,
@@ -43,13 +43,13 @@ export async function handleCompare(args: CompareArgs): Promise<string> {
       row("", "Deal A", "Deal B"),
       row("Title", dealA.title, dealB.title),
       row("Merchant", dealA.merchant, dealB.merchant),
-      row("Price", `€${formatPrice(dealA.discountedPrice)}`, `€${formatPrice(dealB.discountedPrice)}`),
-      row("Original", `€${formatPrice(dealA.originalPrice)}`, `€${formatPrice(dealB.originalPrice)}`),
+      row("Price", `€${formatPrice(dealA.priceEuros)}`, `€${formatPrice(dealB.priceEuros)}`),
+      row("Original", `€${formatPrice(dealA.originalPriceEuros)}`, `€${formatPrice(dealB.originalPriceEuros)}`),
       row("Discount", `${dealA.discountPercent}%`, `${dealB.discountPercent}%`),
       row("Category", dealA.category ?? "N/A", dealB.category ?? "N/A"),
-      row("Flash Sale", dealA.flashSale ? "Yes" : "No", dealB.flashSale ? "Yes" : "No"),
+      row("Promotion", dealA.promotion ? dealA.promotion.code : "None", dealB.promotion ? dealB.promotion.code : "None"),
       row("Featured", dealA.isFeatured ? "Yes" : "No", dealB.isFeatured ? "Yes" : "No"),
-      row("Expires", dealA.expiresAt ? formatDate(dealA.expiresAt) : "N/A", dealB.expiresAt ? formatDate(dealB.expiresAt) : "N/A"),
+      row("Rating", dealA.ratingValue !== undefined ? `${dealA.ratingValue} (${dealA.ratingCount})` : "N/A", dealB.ratingValue !== undefined ? `${dealB.ratingValue} (${dealB.ratingCount})` : "N/A"),
       row("URL", dealA.url, dealB.url),
       "",
     ];
@@ -60,9 +60,9 @@ export async function handleCompare(args: CompareArgs): Promise<string> {
         : `Deal ${dealA.discountPercent > dealB.discountPercent ? "A" : "B"} offers a better discount (${Math.max(dealA.discountPercent, dealB.discountPercent)}%).`;
 
     const cheaperDeal =
-      dealA.discountedPrice === dealB.discountedPrice
+      dealA.priceEuros === dealB.priceEuros
         ? "Both deals have the same price."
-        : `Deal ${dealA.discountedPrice < dealB.discountedPrice ? "A" : "B"} is cheaper at €${formatPrice(Math.min(dealA.discountedPrice, dealB.discountedPrice))}.`;
+        : `Deal ${dealA.priceEuros < dealB.priceEuros ? "A" : "B"} is cheaper at €${formatPrice(Math.min(dealA.priceEuros, dealB.priceEuros))}.`;
 
     lines.push(`Verdict: ${betterDiscount} ${cheaperDeal}`);
 

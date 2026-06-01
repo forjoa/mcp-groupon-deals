@@ -1,40 +1,37 @@
+// Normalized Deal (what tools work with)
+export interface Deal {
+  id: string;
+  uuid: string;
+  title: string;
+  merchant: string;
+  division: string;
+  category?: string;
+  priceEuros: number;           // discounted price in euros (amount / 100)
+  originalPriceEuros: number;   // strike-through price in euros
+  discountPercent: number;      // discountPercentage from API
+  currency: string;
+  url: string;
+  imageUrl?: string;
+  ratingValue?: number;
+  ratingCount?: number;
+  locationAddress?: string;
+  locationName?: string;
+  locationLat?: number;
+  locationLng?: number;
+  badges: Badge[];
+  promotion?: Promotion;
+  isFeatured: boolean;
+}
+
 export interface Badge {
-  label: string;
   type: string;
+  displayText: string;
 }
 
 export interface Promotion {
   code: string;
-  discount: number;
-  description?: string;
-}
-
-export interface FlashSale {
-  startsAt: string;
-  endsAt: string;
-  discountPercent: number;
-}
-
-export interface Deal {
-  id: string;
-  title: string;
-  description?: string;
-  merchant: string;
-  division: string;
-  category?: string;
-  originalPrice: number;
-  discountedPrice: number;
-  discountPercent: number;
-  currency: string;
-  url: string;
-  imageUrl?: string;
-  soldCount?: number;
-  remainingCount?: number;
-  expiresAt?: string;
-  badges: Badge[];
-  promotions: Promotion[];
-  flashSale?: FlashSale;
-  isFeatured: boolean;
+  expiresAt: string;
+  priceEuros: number;
 }
 
 export interface PaginationInfo {
@@ -51,71 +48,89 @@ export interface DealFeedResponse {
   fetchedAt: string;
 }
 
-// --- Raw API response types (GraphQL) ---
-
-export interface RawPaginationInfo {
-  nextOffset: number | null;
-  feedToken: string | null;
-  totalCount?: number;
-}
-
+// Raw API types
 export interface RawPrice {
   amount: number;
-  currency: string;
-  formattedPrice: string;
-}
-
-export interface RawFlashSale {
-  startDateTime: string;
-  endDateTime: string;
-  discountPercent: number;
-}
-
-export interface RawPromotion {
-  code: string;
-  discountPercentage: number;
-  description?: string;
-}
-
-export interface RawBadge {
-  label: string;
-  badgeType: string;
+  currencyCode: string;
+  currencyExponent: number;
 }
 
 export interface RawMerchant {
   name: string;
+  rating: null | { value: number; count: number };
+}
+
+export interface RawPromotion {
+  promoCode: string;
+  expiration: string;
+  price: RawPrice;
+}
+
+export interface RawBadge {
+  badgeType: string;
+  displayText: string;
+}
+
+export interface RawLocation {
+  lat: number;
+  lng: number;
+  address: string;
+  name: string;
+}
+
+export interface RawLocationsSummary {
+  total: number;
+  closest: RawLocation | null;
+}
+
+export interface RawImageUrls {
+  medium: string;
+  large?: string;
+}
+
+export interface RawRating {
+  value: number;
+  count: number;
+}
+
+export interface RawFlags {
+  isTopRatedDeal: boolean;
 }
 
 export interface RawCard {
+  id: string;
   uuid: string;
-  id?: string;
-  title: string;
-  shortDescription?: string;
-  merchant: RawMerchant;
-  division: string;
-  categoryGuid?: string;
-  price: RawPrice;
-  value: RawPrice;
-  discountPercent: number;
   url: string;
-  imageUrl?: string;
-  soldCount?: number;
-  remainingCount?: number;
-  expiresAt?: string;
+  title: string;
+  categoryGuid?: string;
+  prices: {
+    price: RawPrice;
+    strikeThroughPrice: RawPrice | null;
+  };
+  merchant: RawMerchant;
+  promotion: RawPromotion | null;
+  imageUrls: RawImageUrls;
+  rating: RawRating | null;
   badges: RawBadge[];
-  promotions: RawPromotion[];
-  flashSale?: RawFlashSale;
-  isFeatured?: boolean;
+  discountPercentage: number;
+  locationsSummary: RawLocationsSummary | null;
+  flags: RawFlags;
+  invalidateAt: string | null;
+}
+
+export interface RawPaginationInfo {
+  feedToken: string | null;
+  totalCount?: number;
 }
 
 export interface RawDealFeedData {
   cards: RawCard[];
-  pagination: RawPaginationInfo;
+  pagination: RawPaginationInfo | null;
 }
 
 export interface RawGraphQLResponse {
   data: {
-    getHomepageV2DealFeed: RawDealFeedData;
+    queryDealFeed: RawDealFeedData;
   };
   errors?: { message: string }[];
 }

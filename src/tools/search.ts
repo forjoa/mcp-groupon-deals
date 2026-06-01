@@ -33,7 +33,7 @@ export async function handleSearch(args: SearchArgs): Promise<string> {
       filtered = filtered.filter((d) => d.discountPercent >= args.min_discount!);
     }
     if (args.max_price !== undefined) {
-      filtered = filtered.filter((d) => d.discountedPrice <= args.max_price!);
+      filtered = filtered.filter((d) => d.priceEuros <= args.max_price!);
     }
 
     filtered.sort((a, b) => b.discountPercent - a.discountPercent);
@@ -50,7 +50,7 @@ export async function handleSearch(args: SearchArgs): Promise<string> {
     results.forEach((deal, i) => {
       lines.push(`${i + 1}. ${deal.title}`);
       lines.push(`   Merchant: ${deal.merchant}`);
-      lines.push(`   Price: €${formatPrice(deal.discountedPrice)} (was €${formatPrice(deal.originalPrice)}, ${deal.discountPercent}% off)`);
+      lines.push(`   Price: €${formatPrice(deal.priceEuros)} (was €${formatPrice(deal.originalPriceEuros)}, ${deal.discountPercent}% off)`);
       if (deal.category) lines.push(`   Category: ${deal.category}`);
       lines.push(`   URL: ${deal.url}`);
       lines.push("");

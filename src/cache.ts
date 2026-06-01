@@ -35,11 +35,8 @@ export class Cache<T> {
 }
 
 export function selectTtl(deals: Deal[]): number {
-  const now = new Date();
-  const hasActiveFlash = deals.some(
-    (d) => d.flashSale !== undefined && new Date(d.flashSale.endsAt) > now
-  );
-  return hasActiveFlash ? TTL_FLASH_MS : TTL_BASE_MS;
+  const hasActivePromo = deals.some((d) => d.promotion !== undefined);
+  return hasActivePromo ? TTL_FLASH_MS : TTL_BASE_MS;
 }
 
 export const dealCache = new Cache<Deal[]>();

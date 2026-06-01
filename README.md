@@ -6,6 +6,7 @@ An MCP (Model Context Protocol) server that exposes Groupon Spain deals to AI as
 
 - Node.js 20 or later
 - npm 9 or later
+- ~300 MB free disk space for the Playwright Chromium binary (downloaded automatically on `npm install`)
 
 ## Installation
 
@@ -15,6 +16,8 @@ cd mcp-groupon-deals
 npm install
 npm run build
 ```
+
+> **Note:** The first time any tool is invoked the server launches a headless Chromium browser to obtain a valid Groupon session. This takes approximately 3-5 seconds. All subsequent calls within the 20-minute session window are instant — no browser overhead.
 
 ## Connecting to Claude Desktop or Cursor
 

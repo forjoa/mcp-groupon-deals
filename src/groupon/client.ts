@@ -1,4 +1,5 @@
 import { dealCache, selectTtl } from "../cache.js";
+import { getCookieHeader } from "./cookieManager.js";
 import { DIVISIONS } from "./divisions.js";
 import { parseDeals } from "./parser.js";
 import type { DealFeedResponse, RawCard, RawGraphQLResponse } from "./types.js";
@@ -6,6 +7,7 @@ import type { DealFeedResponse, RawCard, RawGraphQLResponse } from "./types.js";
 type Division = typeof DIVISIONS[number];
 
 const API_URL = "https://www.groupon.es/mobilenextapi/graphql";
+const PERSISTED_QUERY_HASH = "c2f9fe8c3d8a58ce8b4f29c187cfbda0bc29013867fcd82a847fae33f93f4ada";
 const PAGE_SIZE = 18;
 const DEFAULT_MAX_PAGES = 3;
 
@@ -24,46 +26,42 @@ export class GrouponApiError extends Error {
   }
 }
 
-const GQL_QUERY = `
-  query getHomepageV2DealFeed($offset: Int!, $feedToken: String) {
-    getHomepageV2DealFeed(offset: $offset, feedToken: $feedToken) {
-      cards {
-        uuid
-        id
-        title
-        shortDescription
-        merchant { name }
-        division
-        categoryGuid
-        price { amount currency formattedPrice }
-        value { amount currency formattedPrice }
-        discountPercent
-        url
-        imageUrl
-        soldCount
-        remainingCount
-        expiresAt
-        isFeatured
-        badges { label badgeType }
-        promotions { code discountPercentage description }
-        flashSale { startDateTime endDateTime discountPercent }
-      }
-      pagination { nextOffset feedToken totalCount }
-    }
-  }
-`;
-
-function buildHeaders(division: string): Record<string, string> {
+async function buildHeaders(division: string): Promise<Record<string, string>> {
+  const cookieHeader = await getCookieHeader(division);
   return {
     "content-type": "application/json",
+    "accept": "application/json",
+    "accept-language": "es-ES,es;q=0.9",
     "apollographql-client-name": "MBNXT Web: Pages Router",
     "x-mbnxt-gql-source": "client",
-    "cookie": `division=${division}; user_locale=es_ES`,
-    "user-agent":
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "cookie": cookieHeader,
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
     "origin": "https://www.groupon.es",
     "referer": "https://www.groupon.es/",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
   };
+}
+
+function buildBody(division: string, offset: number, feedToken: string | null): string {
+  const dealFeedParams: Record<string, unknown> = {
+    limit: PAGE_SIZE,
+    division,
+    pageName: "homepage",
+    pageType: "homepage_all",
+    filters: [],
+    offset,
+  };
+  if (feedToken !== null) dealFeedParams["feedToken"] = feedToken;
+
+  return JSON.stringify([{
+    operationName: "getHomepageV2DealFeed",
+    variables: { dealFeedParams },
+    extensions: {
+      persistedQuery: { version: 1, sha256Hash: PERSISTED_QUERY_HASH },
+    },
+  }]);
 }
 
 export async function fetchDeals(params: FetchDealsParams): Promise<DealFeedResponse> {
@@ -85,40 +83,35 @@ export async function fetchDeals(params: FetchDealsParams): Promise<DealFeedResp
   let pagesFetched = 0;
 
   while (pagesFetched < maxPages) {
-    const variables: Record<string, unknown> = { offset };
-    if (feedToken !== null) variables["feedToken"] = feedToken;
-
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: buildHeaders(division),
-      body: JSON.stringify({ query: GQL_QUERY, variables }),
+      headers: await buildHeaders(division),
+      body: buildBody(division, offset, feedToken),
     });
 
     if (!response.ok) {
       throw new GrouponApiError(`Groupon API error: ${response.statusText}`, response.status);
     }
 
-    const json = (await response.json()) as RawGraphQLResponse;
+    const json = (await response.json()) as RawGraphQLResponse[];
+    const gqlResponse = json[0];
 
-    if (json.errors && json.errors.length > 0) {
+    if (gqlResponse.errors && gqlResponse.errors.length > 0) {
       throw new GrouponApiError(
-        `GraphQL errors: ${json.errors.map((e) => e.message).join("; ")}`,
+        `GraphQL errors: ${gqlResponse.errors.map((e) => e.message).join("; ")}`,
         200
       );
     }
 
-    const feed = json.data.getHomepageV2DealFeed;
+    const feed = gqlResponse.data.queryDealFeed;
     allCards.push(...feed.cards);
     pagesFetched++;
 
-    const { nextOffset, feedToken: nextToken } = feed.pagination;
+    const nextFeedToken = feed.pagination?.feedToken ?? null;
+    if (feed.cards.length < PAGE_SIZE || nextFeedToken === null) break;
 
-    if (nextOffset === null || feed.cards.length < PAGE_SIZE) {
-      break;
-    }
-
-    offset = nextOffset;
-    feedToken = nextToken;
+    offset += PAGE_SIZE;
+    feedToken = nextFeedToken;
   }
 
   const deals = parseDeals(allCards, division);

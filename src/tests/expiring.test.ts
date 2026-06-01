@@ -16,7 +16,6 @@ import { handleExpiring } from "../tools/expiring.js";
 import {
   DEALS,
   spaADeal,
-  spaBDeal,
   gymDeal,
   restaurantDeal,
   expiredDeal,
@@ -31,14 +30,14 @@ beforeEach(() => {
 });
 
 describe("handleExpiring", () => {
-  it("returns deals that expire within the given time window", async () => {
-    // restaurantDeal expires in 2h — should appear when hours=3
-    const result = await handleExpiring({ division: "madrid", hours: 3, limit: 10 });
+  it("returns deals whose promotion expires within the given time window", async () => {
+    // spaADeal promotion expires in 12h — should appear when hours=24
+    const result = await handleExpiring({ division: "madrid", hours: 24, limit: 10 });
 
-    expect(result).toContain(restaurantDeal.title);
+    expect(result).toContain(spaADeal.title);
   });
 
-  it("excludes deals that have already expired", async () => {
+  it("excludes deals whose promotion has already expired", async () => {
     mockFetchDeals.mockResolvedValue(
       makeFeedResponse([...DEALS, expiredDeal])
     );
@@ -48,33 +47,31 @@ describe("handleExpiring", () => {
     expect(result).not.toContain(expiredDeal.title);
   });
 
-  it("excludes deals that have no expiry date", async () => {
-    // Within 3h only restaurantDeal (2h) should appear — spaBDeal, gymDeal, hotelDeal have no expiry
-    const result = await handleExpiring({ division: "madrid", hours: 3, limit: 10 });
+  it("excludes deals that have no promotion", async () => {
+    // restaurantDeal has no promotion, should never appear
+    const result = await handleExpiring({ division: "madrid", hours: 72, limit: 10 });
 
-    // Deals with no expiresAt must not appear
-    expect(result).not.toContain(spaBDeal.merchant); // spaBDeal, no expiry
-    expect(result).not.toContain(gymDeal.merchant); // gymDeal, no expiry
+    expect(result).not.toContain(restaurantDeal.title);
   });
 
-  it("sorts results so the soonest-expiring deal appears first", async () => {
-    // Within 50h: restaurantDeal (2h) and spaADeal (48h) both qualify
+  it("sorts results so the soonest-expiring promotion appears first", async () => {
+    // Within 50h: spaADeal (promo in 12h) and gymDeal (promo in 48h) both qualify
     const result = await handleExpiring({ division: "madrid", hours: 50, limit: 10 });
 
-    const restaurantPos = result.indexOf(restaurantDeal.title);
     const spaAPos = result.indexOf(spaADeal.title);
+    const gymPos = result.indexOf(gymDeal.title);
 
-    expect(restaurantPos).toBeGreaterThanOrEqual(0);
     expect(spaAPos).toBeGreaterThanOrEqual(0);
-    // restaurantDeal (2h) must appear before spaADeal (48h)
-    expect(restaurantPos).toBeLessThan(spaAPos);
+    expect(gymPos).toBeGreaterThanOrEqual(0);
+    // spaADeal (12h) must appear before gymDeal (48h)
+    expect(spaAPos).toBeLessThan(gymPos);
   });
 
   it("returns an informative message when nothing expires within the window", async () => {
-    // With hours=1 no deal expires that soon (shortest is restaurantDeal at 2h)
+    // With hours=1 no promotion expires that soon (shortest is spaADeal at 12h)
     const result = await handleExpiring({ division: "madrid", hours: 1, limit: 10 });
 
-    expect(result).toContain("No deals expiring");
+    expect(result).toContain("No deals");
   });
 
   it("returns error message when fetchDeals fails", async () => {

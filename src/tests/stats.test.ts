@@ -37,19 +37,18 @@ describe("handleStats", () => {
     expect(result).toContain(`${expected}%`);
   });
 
-  it("counts flash sales correctly — spaADeal and hotelDeal have active flash sales", async () => {
+  it("counts active promotions correctly — spaADeal and gymDeal have active promotions", async () => {
     const result = await handleStats({ division: "madrid" });
 
-    expect(result).toMatch(/Flash sales active:\s+2/);
+    expect(result).toMatch(/Active promotions:\s+2/);
   });
 
   it("lists the top categories in the output", async () => {
     const result = await handleStats({ division: "madrid" });
 
-    // Salud y Belleza appears twice (spaADeal + spaBDeal), should be top category
-    expect(result).toContain("Salud y Belleza");
-    expect(result).toContain("Restaurantes");
     expect(result).toContain("Top categories:");
+    // Categories are categoryGuid UUIDs — just verify the section has entries
+    expect(result).toMatch(/\d+\. .+ \(\d+ deal/);
   });
 
   it("returns a no-deals message when the division has no active deals", async () => {

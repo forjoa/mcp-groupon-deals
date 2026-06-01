@@ -18,13 +18,13 @@ export async function handleStats(args: StatsArgs): Promise<string> {
 
     const total = deals.length;
     const avgDiscount = deals.reduce((s, d) => s + d.discountPercent, 0) / total;
-    const avgPrice = deals.reduce((s, d) => s + d.discountedPrice, 0) / total;
-    const avgOriginal = deals.reduce((s, d) => s + d.originalPrice, 0) / total;
+    const avgPrice = deals.reduce((s, d) => s + d.priceEuros, 0) / total;
+    const avgOriginal = deals.reduce((s, d) => s + d.originalPriceEuros, 0) / total;
     const maxDiscount = Math.max(...deals.map((d) => d.discountPercent));
-    const minPrice = Math.min(...deals.map((d) => d.discountedPrice));
-    const flashCount = deals.filter((d) => d.flashSale !== undefined).length;
+    const minPrice = Math.min(...deals.map((d) => d.priceEuros));
+    const promoCount = deals.filter((d) => d.promotion !== undefined).length;
     const featuredCount = deals.filter((d) => d.isFeatured).length;
-    const expiryCount = deals.filter((d) => d.expiresAt !== undefined).length;
+    const ratedCount = deals.filter((d) => d.ratingValue !== undefined).length;
 
     const catMap = new Map<string, number>();
     for (const d of deals) {
@@ -47,9 +47,9 @@ export async function handleStats(args: StatsArgs): Promise<string> {
       `  Highest discount:       ${maxDiscount}%`,
       ``,
       `Availability`,
-      `  Flash sales active:     ${flashCount}`,
+      `  Active promotions:      ${promoCount}`,
       `  Featured deals:         ${featuredCount}`,
-      `  Deals with expiry date: ${expiryCount}`,
+      `  Deals with ratings:     ${ratedCount}`,
       ``,
       `Top categories:`,
       ...topCats.map(([ cat, count ], i) => `  ${i + 1}. ${cat} (${count} deal${count === 1 ? "" : "s"})`),
