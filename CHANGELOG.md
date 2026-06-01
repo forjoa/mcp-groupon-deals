@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-01
+
+### Added
+
+- `search_deals` — filters deals by keyword (matched against title and merchant), with optional `min_discount` and `max_price` filters; results sorted by discount descending.
+- `get_best_value_deals` — returns top deals sorted by discount percentage, with optional `max_price` filter.
+- `get_expiring_deals` — returns deals expiring within a configurable number of hours, sorted soonest-first.
+- `get_deal_stats` — computes aggregate statistics for a division: average price, average discount, maximum discount, number of flash sales, and top categories by deal count.
+- `compare_deals` — fetches two deals by ID within a division and returns a structured side-by-side comparison.
+- `get_deal_by_url` — resolves a groupon.es deal URL to a full `Deal` object, with automatic division inference from the URL path.
+- `src/tools/shared.ts` — shared helpers used across all tools: `DivisionSchema` (Zod), `formatPrice`, `formatDate`, and `hoursUntil`.
+
+### Changed
+
+- All tool names are now canonical and aligned with ARCH.md (`search_deals`, `get_best_value_deals`, `get_expiring_deals`, `get_deal_stats`, `compare_deals`, `get_deal_by_url`).
+- Zod input validation added to all six tools with descriptive error messages surfaced to the MCP client.
+
 ## [0.1.1] - 2026-06-01
 
 ### Added
@@ -48,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/cache.ts` — TTL cache stub for reducing redundant API calls.
 - Zero TypeScript errors confirmed (`tsc --noEmit`).
 
-[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/your-username/mcp-groupon-deals/releases/tag/v0.1.0

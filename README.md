@@ -50,14 +50,56 @@ Replace `/absolute/path/to/mcp-groupon-deals` with the actual path where you clo
 
 ## Available Tools
 
-| Tool | Parameters | Description |
-|------|-----------|-------------|
-| `search_deals` | `division` (required), `query?`, `category_guid?`, `min_discount?`, `max_price?`, `limit?` | Search deals in a division with optional keyword, category, discount, and price filters |
-| `get_best_value_deals` | `division` (required), `min_rating?`, `max_price?`, `limit?` | Retrieve top-rated or highest-discount deals in a division |
-| `get_expiring_deals` | `division` (required), `hours?`, `limit?` | List deals expiring within a given number of hours |
-| `get_deal_stats` | `division` (required) | Return aggregate statistics (counts, average discount, price distribution) for a division |
-| `compare_deals` | `deal_ids[]` (required), `division` (required) | Fetch and compare multiple deals side-by-side |
-| `get_deal_by_url` | `url` (required) | Retrieve a single deal by its groupon.es URL |
+| Tool | Required params | Optional params | Returns |
+|------|----------------|-----------------|---------|
+| `search_deals` | `division` | `query`, `min_discount`, `max_price`, `limit` | Deals matching the keyword (title + merchant), filtered by discount and price, sorted by discount descending |
+| `get_best_value_deals` | `division` | `max_price`, `limit` | Top deals sorted by discount percentage, optionally capped by price |
+| `get_expiring_deals` | `division` | `hours` (default 24), `limit` | Deals expiring within the given number of hours, sorted soonest first |
+| `get_deal_stats` | `division` | — | Aggregate stats: average price, average discount, maximum discount, flash sale count, top categories |
+| `compare_deals` | `division`, `deal_id_1`, `deal_id_2` | — | Side-by-side comparison of two deals by ID |
+| `get_deal_by_url` | `url` | — | Full deal object resolved from a groupon.es URL; division is inferred from the URL path |
+
+### Parameter details
+
+**`division`** — one of the 12 supported city codes (see Supported Divisions below).
+
+**`query`** (`search_deals`) — free-text string matched against deal title and merchant name.
+
+**`min_discount`** (`search_deals`) — minimum discount percentage (0–100). Only deals at or above this threshold are returned.
+
+**`max_price`** (`search_deals`, `get_best_value_deals`) — maximum deal price in euros. Deals with a higher price are excluded.
+
+**`limit`** (`search_deals`, `get_best_value_deals`, `get_expiring_deals`) — maximum number of results to return (default 10).
+
+**`hours`** (`get_expiring_deals`) — look-ahead window in hours (default 24). Deals without an expiry date are excluded.
+
+**`deal_id_1` / `deal_id_2`** (`compare_deals`) — the internal Groupon deal IDs to compare, both within the same `division`.
+
+**`url`** (`get_deal_by_url`) — a full groupon.es deal URL, e.g. `https://www.groupon.es/deals/madrid/some-merchant/deal-slug`. The division is extracted automatically from the path.
+
+## Example Interactions
+
+These show how an AI assistant would invoke the tools in natural language:
+
+**"Find spa deals in Madrid under €30 with at least 50% off"**
+```
+search_deals({ division: "madrid", query: "spa", max_price: 30, min_discount: 50 })
+```
+
+**"What are the best value deals in Barcelona right now?"**
+```
+get_best_value_deals({ division: "barcelona", limit: 5 })
+```
+
+**"Are there any deals expiring in the next 6 hours in Valencia?"**
+```
+get_expiring_deals({ division: "valencia", hours: 6 })
+```
+
+**"I found this deal — what does it include?"**
+```
+get_deal_by_url({ url: "https://www.groupon.es/deals/madrid/restaurante-xyz/abc123" })
+```
 
 ## Supported Divisions
 
