@@ -34,13 +34,16 @@ graph TB
 ```mermaid
 graph LR
     subgraph Tools["MCP Tools"]
-        T1["🔍 search_deals\n(division, query?, min_discount?, max_price?, limit?)"]
+        T1["🔍 search_deals\n(division, query?, category_guid?, min_discount?, max_price?, limit?)"]
         T2["💎 get_best_value_deals\n(division, min_rating?, max_price?, limit?)"]
         T3["⏰ get_expiring_deals\n(division, hours?, limit?)"]
         T4["📊 get_deal_stats\n(division)"]
         T5["⚖️ compare_deals\n(deal_ids[], division)"]
+        T6["🔗 get_deal_by_url\n(url)"]
     end
 ```
+
+> **Limitación conocida de `search_deals`**: el filtrado por `query` opera sobre título y nombre de comerciante post-fetch. Búsquedas semánticas abiertas ("restaurantes románticos") pueden tener baja cobertura. Para mayor precisión usar `category_guid`.
 
 ---
 
@@ -63,7 +66,7 @@ sequenceDiagram
         Server->>API: POST /mobilenextapi/graphql\n{offset:18, feedToken: "..."}
         API-->>Server: {cards: [...18 deals], pagination: {nextOffset: 36}}
         Note over Server,API: Repite hasta tener suficientes deals
-        Server->>Cache: set("madrid", deals[], TTL=15min)
+        Server->>Cache: set("madrid", deals[], TTL=30min*)\n*10min si hay flash sales activos
     else Cache hit
         Cache-->>Server: deals[]
     end
@@ -89,6 +92,7 @@ graph TB
         T3[expiring.ts]
         T4[stats.ts]
         T5[compare.ts]
+        T6[dealByUrl.ts]
     end
 
     subgraph Groupon["src/groupon/"]
@@ -101,8 +105,8 @@ graph TB
         CA[cache.ts\nMap + TTL]
     end
 
-    S --> T1 & T2 & T3 & T4 & T5
-    T1 & T2 & T3 & T4 & T5 --> C
+    S --> T1 & T2 & T3 & T4 & T5 & T6
+    T1 & T2 & T3 & T4 & T5 & T6 --> C
     C --> CA
     C --> P
     P --> TY
@@ -194,11 +198,29 @@ graph LR
 
 ---
 
-## 8. Decisiones de diseño abiertas
+## 8. Decisiones de diseño
 
-| Pregunta | Opciones | Decisión |
-|----------|----------|----------|
-| ¿Divisions hardcodeadas o dinámicas? | Lista fija de ciudades ES / descubrir en runtime | TBD |
-| ¿Cuántos deals por defecto? | 1 página (18) / 5 páginas (90) / más | TBD |
-| ¿Transport? | stdio (local) / HTTP+SSE (remoto) | TBD |
-| ¿Tool de geolocalización? | `get_nearby_deals(lat, lng)` | TBD |
+| Pregunta | Decisión | Razón |
+|----------|----------|-------|
+| ¿Transport? | `stdio` | Estándar MCP para servidores locales; HTTP+SSE sería over-engineering para este scope |
+| ¿Divisions hardcodeadas o dinámicas? | Lista fija de ~12 ciudades ES como enum validado | Evita llamadas de discovery; el conjunto de ciudades de Groupon.es es estable |
+| ¿Cuántos deals por defecto? | 3 páginas (54 deals) | Balance entre cobertura y latencia; configurable por tool |
+| ¿Tool de geolocalización? | Fuera de scope v1 | Extensión natural: `get_nearby_deals(lat, lng)` una vez se tenga el endpoint correcto |
+| ¿TTL de cache? | 30min base; 10min si hay flash sales activos en el lote | Flash sales cambian estado en horas, pero re-fetchear cada 15min es innecesario sin sales activos |
+
+### Divisions soportadas (v1)
+
+```typescript
+const DIVISIONS = [
+  "madrid", "barcelona", "valencia", "sevilla", "bilbao",
+  "malaga", "zaragoza", "murcia", "palma", "alicante",
+  "valladolid", "granada"
+] as const;
+
+type Division = typeof DIVISIONS[number];
+```
+
+### Extensiones naturales (post-v1)
+- `get_nearby_deals(lat, lng, radius_km)` — geolocalización real
+- Transport HTTP+SSE para uso remoto / multi-cliente
+- Búsqueda semántica con embeddings sobre el corpus de deals cacheado
