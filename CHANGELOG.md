@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - All tool names are now canonical and aligned with ARCH.md (`search_deals`, `get_best_value_deals`, `get_expiring_deals`, `get_deal_stats`, `compare_deals`, `get_deal_by_url`).
 - Zod input validation added to all six tools with descriptive error messages surfaced to the MCP client.
+- Added `postbuild` npm script that automatically sets `dist/index.js` executable (`chmod +x`) after every build, removing the need for a manual step.
+- Added `prepare` npm script that runs the build on `npm install`, enabling zero-step setup on fresh clones.
+- Bumped package version to `0.2.0`.
 
 ## [0.1.1] - 2026-06-01
 
