@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-01
+
+### Added
+
+- Vitest test suite with 36 tests across 6 files, one per tool handler (`search.test.ts`, `bestValue.test.ts`, `expiring.test.ts`, `stats.test.ts`, `compare.test.ts`, `dealByUrl.test.ts`).
+- `src/tests/fixtures.ts` — 6 realistic Groupon.es deal fixtures covering spa, hammam, restaurant, gym, theatre, and hotel deals, plus an expired-deal edge case used across all test files.
+- `fetchDeals` is fully mocked via `vi.mock` — no real HTTP calls or Groupon API access required to run the tests.
+- Added `vitest` to `devDependencies` and `"test": "vitest run"` script to `package.json`.
+
 ## [0.2.0] - 2026-06-01
 
 ### Added
@@ -68,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/cache.ts` — TTL cache stub for reducing redundant API calls.
 - Zero TypeScript errors confirmed (`tsc --noEmit`).
 
-[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/your-username/mcp-groupon-deals/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/your-username/mcp-groupon-deals/releases/tag/v0.1.0

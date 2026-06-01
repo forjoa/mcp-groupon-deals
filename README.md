@@ -125,3 +125,11 @@ npm run typecheck
 ```
 
 The server communicates over **stdio** using the MCP SDK, so it is launched as a subprocess by the MCP client — no network port is needed.
+
+## Testing
+
+```bash
+npm test
+```
+
+Tests use Vitest with `fetchDeals` fully mocked — no Groupon API access or network connection is required to run the suite.
