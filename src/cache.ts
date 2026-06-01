@@ -1,16 +1,45 @@
+import type { Deal } from "./groupon/types.js";
+
+export const TTL_BASE_MS = 30 * 60 * 1000;
+export const TTL_FLASH_MS = 10 * 60 * 1000;
+
 export interface CacheEntry<T> {
   value: T;
   expiresAt: number;
 }
 
 export class Cache<T> {
-  get(_key: string): T | undefined {
-    throw new Error("not implemented");
+  private store = new Map<string, CacheEntry<T>>();
+
+  get(key: string): T | undefined {
+    const entry = this.store.get(key);
+    if (!entry) return undefined;
+    if (Date.now() >= entry.expiresAt) {
+      this.store.delete(key);
+      return undefined;
+    }
+    return entry.value;
   }
-  set(_key: string, _value: T, _ttlMs: number): void {
-    throw new Error("not implemented");
+
+  set(key: string, value: T, ttlMs: number): void {
+    this.store.set(key, { value, expiresAt: Date.now() + ttlMs });
   }
-  has(_key: string): boolean {
-    throw new Error("not implemented");
+
+  has(key: string): boolean {
+    return this.get(key) !== undefined;
+  }
+
+  delete(key: string): void {
+    this.store.delete(key);
   }
 }
+
+export function selectTtl(deals: Deal[]): number {
+  const now = new Date();
+  const hasActiveFlash = deals.some(
+    (d) => d.flashSale !== undefined && new Date(d.flashSale.endsAt) > now
+  );
+  return hasActiveFlash ? TTL_FLASH_MS : TTL_BASE_MS;
+}
+
+export const dealCache = new Cache<Deal[]>();

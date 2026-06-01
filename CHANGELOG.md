@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-01
+
+### Added
+
+- `src/cache.ts` — fully implemented in-memory TTL cache:
+  - `Cache<T>` generic class with `get`, `set`, `has`, and `delete` methods; expired entries are evicted automatically on read.
+  - `selectTtl(deals)` — returns a 10-minute TTL when active flash sales are present, 30 minutes otherwise.
+  - `dealCache` singleton pre-typed for `Deal[]`.
+  - Exported constants `TTL_BASE_MS` (30 min) and `TTL_FLASH_MS` (10 min).
+- `src/groupon/types.ts` — raw API response interfaces (`RawCard`, `RawGraphQLResponse`, `RawPaginationInfo`, and related types) to model the groupon.es GraphQL payload.
+- `src/groupon/parser.ts` — `parseDeals(rawCards, division)` implementation mapping `RawCard` objects to the internal `Deal` type.
+- `src/groupon/client.ts` — fully implemented HTTP client:
+  - `fetchDeals(params)` with a cache-first strategy.
+  - Paginates the groupon.es GraphQL API up to 3 pages (54 deals) per division.
+  - `division` parameter typed as the `Division` enum (allowlist validation, prevents header injection).
+  - `GrouponApiError` class for HTTP-level and GraphQL-level errors.
+  - Dynamic TTL selection via `selectTtl` applied after each fetch.
+
 ## [0.1.0] - 2026-06-01
 
 ### Added
@@ -30,5 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/cache.ts` — TTL cache stub for reducing redundant API calls.
 - Zero TypeScript errors confirmed (`tsc --noEmit`).
 
-[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/your-username/mcp-groupon-deals/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/your-username/mcp-groupon-deals/releases/tag/v0.1.0
